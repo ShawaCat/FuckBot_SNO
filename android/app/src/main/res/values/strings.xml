@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">FuckBot RC</string>
+
+    <string name="connect">Подключить</string>
+    <string name="disconnect">Отключить</string>
+    <string name="stop">СТОП</string>
+    <string name="speed">Скорость</string>
+    <string name="speed_full">100%</string>
+    <string name="speed_value">%1$d%%</string>
+
+    <string name="command_idle">Y 0   X 0</string>
+    <string name="command_value">Y %1$d   X %2$d</string>
+
+    <string name="status_disconnected">Не подключено</string>
+    <string name="status_connecting">Подключение к %1$s…</string>
+    <string name="status_connected">Подключено: %1$s</string>
+    <string name="status_error">Ошибка связи</string>
+
+    <string name="joystick_desc">Джойстик управления роботом</string>
+
+    <string name="no_bluetooth">На этом устройстве нет Bluetooth</string>
+    <string name="no_devices_title">Нет спаренных устройств</string>
+    <string name="no_devices_message">Сначала спарьте HC-06 в настройках Bluetooth (PIN 1234 или 0000), затем вернитесь и нажмите «Подключить».</string>
+    <string name="open_bt_settings">Настройки Bluetooth</string>
+    <string name="pick_device">Выберите HC-06</string>
+    <string name="unknown_device">Неизвестное устройство</string>
+    <string name="need_permission">Без разрешения Bluetooth подключение невозможно</string>
+</resources>

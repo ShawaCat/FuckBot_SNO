@@ -1,0 +1,17 @@
+# --- C/C++ (тесты прошивки) ---
+test/run_tests
+*.o
+
+# --- Python ---
+__pycache__/
+
+# --- Android ---
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/gradle/wrapper/gradle-wrapper.jar
+.idea/
+*.iml
+.cxx/
+captures/
