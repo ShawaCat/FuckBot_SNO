@@ -7,8 +7,11 @@
 ```
 FuckBot_SNO/
 ├── firmware/FuckBot_SNO/FuckBot_SNO.ino   ← прошивка (открывать в Arduino IDE)
+├── android/                               ← приложение-пульт с джойстиком (Kotlin)
+│   ├── app/src/main/java/com/fuckbot/sno/
+│   └── README.md
 ├── tools/bt_check.py                      ← проверка робота с ПК по BT (pyserial)
-└── test/                                  ← тесты логики на ПК (эмулятор Arduino API)
+└── test/                                  ← тесты логики прошивки на ПК (эмулятор Arduino API)
     ├── main.cpp
     ├── mock/Arduino.h
     └── Makefile
@@ -138,70 +141,32 @@ FuckBot_SNO/
 
 ## 4. Android-приложение
 
-HC-06 — это **Bluetooth Classic (SPP)**, не BLE. В приложении нужен `BluetoothSocket`
-с UUID `00001101-0000-1000-8000-00805F9B34FB`. PIN при спаривании — `1234` или `0000`.
+Готовый пульт лежит в [`android/`](android/README.md): джойстик, кнопка СТОП,
+ограничение скорости, индикатор связи. Kotlin, без внешних зависимостей.
 
-### Вариант А — готовое приложение
-
-Любое приложение с джойстиком, которое умеет отправлять **свой текстовый формат** кадра
-(в них это обычно называется custom/advanced mode). Настройте формат на
-`<Y>,<X>\n` с диапазоном −100…100. Для отладки удобен «Serial Bluetooth Terminal»:
-наберите `50,0` и нажмите отправку с переводом строки.
-
-Если приложение шлёт что-то другое (`F/B/L/R`, `1,2,3…`, HEX-байты) — проще
-подстроить `parseFrame()` под него, чем искать «правильное» приложение.
-
-### Вариант Б — своё приложение (Kotlin, ~40 строк)
-
-```kotlin
-private const val SPP_UUID = "00001101-0000-1000-8000-00805F9B34FB"
-
-class RobotLink(private val device: BluetoothDevice) {
-    private var socket: BluetoothSocket? = null
-    private var out: OutputStream? = null
-
-    fun connect() {
-        val s = device.createRfcommSocketToServiceRecord(UUID.fromString(SPP_UUID))
-        s.connect()                       // в фоновом потоке, не в UI!
-        socket = s
-        out = s.outputStream
-    }
-
-    fun send(y: Int, x: Int) {
-        val o = out ?: return
-        o.write("${y.coerceIn(-100, 100)},${x.coerceIn(-100, 100)}\n"
-            .toByteArray(Charsets.US_ASCII))
-    }
-
-    fun close() {
-        send(0, 0)                        // стоп перед закрытием
-        runCatching { socket?.close() }
-    }
-}
+```bash
+# Android Studio → Open → каталог android/ → Run  (JDK 17 входит в Studio)
+# либо вручную:
+cd android && gradle wrapper && ./gradlew assembleDebug
+# APK: android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-Отправка из значения стика (20–50 Гц, это же и держит failsafe живым):
+Подключение: спарьте HC-06 в настройках Bluetooth телефона (PIN `1234` или `0000`),
+затем в приложении «Подключить» → выбрать модуль. На Android 12+ приложение попросит
+разрешение «Устройства поблизости».
 
-```kotlin
-// stickX/stickY: -1f..1f из onTouchEvent (вверх по экрану = вперёд)
-fun pushStick(stickY: Float, stickX: Float) {
-    scope.launch {
-        while (isActive) {
-            link.send((stickY * 100).toInt(), (stickX * 100).toInt())
-            delay(20)
-        }
-    }
-}
-```
+HC-06 — это **Bluetooth Classic (SPP)**, не BLE: приложению нужен `BluetoothSocket`
+с UUID `00001101-0000-1000-8000-00805F9B34FB`.
 
-Важно:
+### Если хотите чужое приложение
 
-- разрешения: Android 12+ — `BLUETOOTH_CONNECT` (+`BLUETOOTH_SCAN` для поиска),
-  ниже — `BLUETOOTH`, `BLUETOOTH_ADMIN`;
-- `connect()`, `write()` — всегда вне главного потока (иначе `NetworkOnMainThreadException`);
-- в `onPause()`/`onDestroy()` — отправить `0,0` и закрыть сокет.
+Подойдёт любое, которое умеет отправлять **свой текстовый кадр** вида `Y,X`
+(в них это обычно режим custom/advanced), с диапазоном −100…100 и переводом строки.
+Для отладки удобен «Serial Bluetooth Terminal»: наберите `50,0` и отправьте с `\n`.
 
----
+Если приложение шлёт что-то другое (`F/B/L/R`, отдельные байты, HEX) — либо правьте
+`parseFrame()` в прошивке, либо `Protocol.frame()` в приложении: обе точки входа
+изолированы и не затрагивают остальную логику.
 
 ## 5. Проверка без телефона
 
@@ -218,6 +183,9 @@ make -C test        # 48 проверок: микшер, разбор кадро
 python3 tools/bt_check.py COM5            # стрелки/WASD, живой джойстик
 python3 tools/bt_check.py COM5 --demo     # автопрогон всех режимов
 ```
+
+**Приложение**: см. [`android/README.md`](android/README.md) — сборка, подключение,
+разбор частых проблем.
 
 ---
 

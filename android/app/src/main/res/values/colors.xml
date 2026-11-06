@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="bg">#0B0F16</color>
+    <color name="panel">#1E2634</color>
+
+    <color name="text_primary">#E8EDF5</color>
+    <color name="text_secondary">#8A94A6</color>
+
+    <color name="accent">#38BDF8</color>
+    <color name="stop_red">#E11D48</color>
+
+    <color name="state_off">#4B5563</color>
+    <color name="state_wait">#F59E0B</color>
+    <color name="state_on">#22C55E</color>
+    <color name="state_err">#EF4444</color>
+</resources>
