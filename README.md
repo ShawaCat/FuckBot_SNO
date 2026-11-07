@@ -146,7 +146,10 @@ FuckBot_SNO/
 Готовый пульт лежит в [`android/`](android/README.md): джойстик, кнопка СТОП,
 ограничение скорости, индикатор связи. Kotlin, без внешних зависимостей.
 
-**Android Studio не обязательна.** APK собирается в облаке GitHub:
+**Android Studio не обязательна.** Готовый APK: [Releases → FuckBotRC.apk](https://github.com/ShawaCat/FuckBot_SNO/releases/latest)
+(прямая ссылка: `https://github.com/ShawaCat/FuckBot_SNO/releases/latest/download/FuckBotRC.apk`).
+
+Собрать самому — в облаке GitHub (без установки чего-либо):
 
 1. Запушьте изменения (ветки `main` и `arena/**`) или нажмите **Actions → APK → Run workflow**.
 2. **Actions** → последний запуск → **Artifacts** → `FuckBotRC-apk.zip`.
