@@ -1,0 +1,103 @@
+# Сборка debug APK приложения FuckBot RC в облаке GitHub.
+#
+# Ничего устанавливать не нужно: запушьте изменения (или нажмите "Run workflow"
+# на вкладке Actions) — через несколько минут APK появится в артефактах сборки.
+#
+#   Actions → "APK" → последний запуск → Artifacts → FuckBotRC-apk.zip
+#
+# Если запушить тег вида v1.0, APK дополнительно прикрепится к GitHub Release,
+# откуда его можно скачать прямо на телефон и установить.
+
+name: APK
+
+on:
+  push:
+    branches:
+      - main
+      - 'arena/**'
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    name: Сборка debug APK
+    # Фиксированная версия образа: на нём Android SDK уже предустановлен,
+    # а ubuntu-latest в 2026-м может уехать на другую версию.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+
+    steps:
+      - name: Получить код
+        uses: actions/checkout@v5
+
+      - name: JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK
+        run: |
+          set -uo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+
+          if [ ! -d "$SDK_ROOT" ]; then
+            echo "::error::Каталог Android SDK не найден: $SDK_ROOT"
+            ls -la /usr/local/lib/android 2>/dev/null || true
+            exit 1
+          fi
+
+          if ! command -v sdkmanager >/dev/null 2>&1; then
+            export PATH="$SDK_ROOT/cmdline-tools/latest/bin:$PATH"
+          fi
+          command -v sdkmanager >/dev/null 2>&1 || { 
+            echo "::error::sdkmanager не найден в $SDK_ROOT"
+            find "$SDK_ROOT" -maxdepth 4 -name sdkmanager
+            exit 1
+          }
+
+          echo "$SDK_ROOT/cmdline-tools/latest/bin" >> "$GITHUB_PATH"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+
+          sdkmanager --version
+          yes | sdkmanager --licenses >/dev/null 2>&1 || true
+          sdkmanager --install "platforms;android-34" "build-tools;34.0.0" \
+            || echo "::warning::не удалось доустановить platform/build-tools — используем предустановленные"
+
+          echo "Платформы:"; ls "$SDK_ROOT/platforms" 2>/dev/null || true
+          echo "Build-tools:"; ls "$SDK_ROOT/build-tools" 2>/dev/null || true
+
+      - name: Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Собрать APK
+        working-directory: android
+        run: gradle :app:assembleDebug --no-daemon --stacktrace
+
+      - name: Переименовать APK
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk FuckBotRC.apk
+
+      - name: Выложить артефакт
+        uses: actions/upload-artifact@v4
+        with:
+          name: FuckBotRC-apk
+          path: FuckBotRC.apk
+          if-no-files-found: error
+
+      - name: Приложить к релизу (только при пуше тега v*)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: FuckBotRC.apk
+          generate_release_notes: true

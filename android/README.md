@@ -12,22 +12,71 @@
 
 ## Как собрать
 
-1. Android Studio → **Open** → выберите каталог `android/`.
-2. Дождитесь Gradle Sync (Studio сама скачает Gradle 8.7 по `gradle-wrapper.properties`;
-   JDK 17 входит в комплект Studio).
-3. Подключите телефон по USB (включён режим разработчика + отладка по USB) и нажмите **Run**.
+### Готовый APK — скачать и поставить
 
-Сборка APK без Studio (если установлен Gradle 8.7+):
+Если не хочется ничего собирать, возьмите уже собранный файл:
+
+**https://github.com/ShawaCat/FuckBot_SNO/releases/latest/download/FuckBotRC.apk**
+
+(те же файлы — на странице [Releases](https://github.com/ShawaCat/FuckBot_SNO/releases)).
+На телефоне откройте ссылку → скачается APK → «Установить», разрешив установку
+из этого источника. Он подписан debug-ключом: для личного робота это норма.
+
+### Вариант 1 — собрать в облаке GitHub, ничего не устанавливая
+
+1. Запушьте изменения — сборка запустится сама (ветки `main` и `arena/**`).
+   Сборка занимает ~1.5 минуты.
+   Можно и вручную: **Actions** → «APK» → **Run workflow**.
+2. Откройте **Actions** → последний запуск с зелёной галочкой → **Artifacts** →
+   `FuckBotRC-apk.zip`.
+3. Распакуйте, отправьте `FuckBotRC.apk` на телефон и установите
+   (разрешите «Установка из неизвестных источников» для файлового менеджера).
+
+APK подписан debug-ключом — для домашнего робота этого достаточно: он ставится
+и работает, просто Google Play его не примет (и не надо).
+
+Хотите ссылку на скачивание **прямо с телефона**? Запушьте тег:
 
 ```bash
-cd android
-gradle wrapper          # один раз, создаст gradlew и gradle-wrapper.jar
-./gradlew assembleDebug # APK: app/build/outputs/apk/debug/app-debug.apk
+git tag v1.0
+git push origin v1.0
 ```
 
-> В репозитории лежат `gradle-wrapper.properties`, но без бинарного `gradle-wrapper.jar`
-> (его не кладут в git-артефакты сборки). Android Studio sync'ится и без него,
-> а для консоли достаточно один раз выполнить `gradle wrapper`.
+APK автоматически прикрепится к странице **Releases** — открываете её в браузере
+телефона и ставите.
+
+Workflow лежит в [`.github/workflows/build-apk.yml`](../.github/workflows/build-apk.yml):
+JDK 17 + Android SDK + Gradle 8.7 на `ubuntu-latest`, сборка `assembleDebug`.
+
+### Вариант 2 — локально без Android Studio
+
+Нужны только **JDK 17**, `curl` и `unzip` (Linux, macOS или Windows в WSL/Git Bash):
+
+```bash
+bash tools/build_apk.sh
+```
+
+Скрипт сам скачает Android command-line tools, поставит `platforms;android-34` и
+`build-tools;34.0.0`, возьмёт Gradle 8.7 и соберёт
+`android/app/build/outputs/apk/debug/app-debug.apk`. Первый запуск — 10–20 минут
+и ~700 МБ, дальше сборка занимает секунды.
+
+### Вариант 3 — вручную, если SDK и Gradle уже есть
+
+```bash
+export ANDROID_HOME=$HOME/android-sdk   # или свой путь
+cd android
+gradle wrapper          # один раз: создаст gradlew и gradle-wrapper.jar
+./gradlew assembleDebug
+```
+
+> В репозитории лежит `gradle-wrapper.properties`, но без бинарного
+> `gradle-wrapper.jar` (бинарь в git не кладём — его создаёт `gradle wrapper`).
+> Облачная сборка и скрипт выше работают без него.
+
+### Вариант 4 — Android Studio (если когда-нибудь появится)
+
+**Open** → каталог `android/` → дождаться Sync → **Run**.
 
 ---
 
@@ -112,6 +161,8 @@ return String.format(Locale.US, "%d,%d\n", y, x).toByteArray(Charsets.US_ASCII)
 
 Код проверялся компилятором Kotlin (2.4.21) против заглушек Android API — синтаксические
 и типовые ошибки исключены; логика `Protocol` (18 проверок: мёртвая зона, обрезка
-диапазона, ASCII-кадры) прогнана отдельным тестом на JVM.
+диапазона, ASCII-кадры) прогнана отдельным тестом на JVM. Workflow и скрипт сборки
+проверены на разбор/синтаксис, но реальная сборка APK идёт в GitHub Actions —
+статус последней сборки видно на вкладке **Actions**.
 
-Окончательная проверка «в бою» — сборка в Android Studio и поездка по квартире.
+Окончательная проверка «в бою» — установка APK и поездка по квартире.

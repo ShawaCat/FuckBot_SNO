@@ -10,6 +10,8 @@ FuckBot_SNO/
 ├── android/                               ← приложение-пульт с джойстиком (Kotlin)
 │   ├── app/src/main/java/com/fuckbot/sno/
 │   └── README.md
+├── .github/workflows/build-apk.yml        ← сборка APK в облаке (без Android Studio)
+├── tools/build_apk.sh                     ← сборка APK без Android Studio
 ├── tools/bt_check.py                      ← проверка робота с ПК по BT (pyserial)
 └── test/                                  ← тесты логики прошивки на ПК (эмулятор Arduino API)
     ├── main.cpp
@@ -144,10 +146,20 @@ FuckBot_SNO/
 Готовый пульт лежит в [`android/`](android/README.md): джойстик, кнопка СТОП,
 ограничение скорости, индикатор связи. Kotlin, без внешних зависимостей.
 
+**Android Studio не обязательна.** Готовый APK: [Releases → FuckBotRC.apk](https://github.com/ShawaCat/FuckBot_SNO/releases/latest)
+(прямая ссылка: `https://github.com/ShawaCat/FuckBot_SNO/releases/latest/download/FuckBotRC.apk`).
+
+Собрать самому — в облаке GitHub (без установки чего-либо):
+
+1. Запушьте изменения (ветки `main` и `arena/**`) или нажмите **Actions → APK → Run workflow**.
+2. **Actions** → последний запуск → **Artifacts** → `FuckBotRC-apk.zip`.
+3. Поставьте `FuckBotRC.apk` на телефон. Для ссылки прямо на телефон — запушьте тег
+   `git tag v1.0 && git push origin v1.0`, APK прикрепится к **Releases**.
+
+Локально без Studio (нужен только JDK 17):
+
 ```bash
-# Android Studio → Open → каталог android/ → Run  (JDK 17 входит в Studio)
-# либо вручную:
-cd android && gradle wrapper && ./gradlew assembleDebug
+bash tools/build_apk.sh          # сам поставит Android SDK и Gradle 8.7
 # APK: android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
